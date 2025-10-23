@@ -61,28 +61,35 @@ class LunarLanderEnv(gym.Wrapper):
         self.frame_count += 1
 
         # Add metrics to observation
-        x, y, x_dot, y_dot, theta, theta_dot, leg1, leg2 = obs
+        x, y, x_vel, y_vel, angle, angular_vel, leg1, leg2 = obs
 
         info["x_pos"] = float(x)
         info["y_pos"] = float(y)
-        info["x_vel"] = float(x_dot)
-        info["y_vel"] = float(y_dot)
-        info["angle"] = float(theta)
-        info["angular_vel"] = float(theta_dot)
+        info["x_vel"] = float(x_vel)
+        info["y_vel"] = float(y_vel)
+        info["angle"] = float(angle)
+        info["angular_vel"] = float(angular_vel)
         info["leg1_contact"] = bool(leg1)
         info["leg2_contact"] = bool(leg2)
 
         # Landing/crash detection
         between_flags = abs(x) < 0.2
-        if leg1 and leg2 and between_flags: # count as landing if it lands between flags and both legs touch the ground
+        horizontal_stop = abs(x_vel) < 0.5
+        vertical_stop = abs(y_vel) < 0.5
+        stablized = abs(angle) < 0.1
+
+        # Check if the lander crashed or landed (after episode ends)
+        if leg1 and leg2 and between_flags and horizontal_stop and vertical_stop and stablized: 
             self.landed = True
+            self.crashed = False
             terminated = True
-        elif leg1 and leg2 and y < 0.05: 
+        elif (leg1 or leg2) and (not stablized or not horizontal_stop or not vertical_stop or not between_flags):  
+            self.landed = False
             self.crashed = True
             terminated = True
-        elif leg1 or leg2: 
+        elif terminated: 
             self.crashed = True
-            terminated = True
+
 
         info["landed"] = self.landed
         info["crashed"] = self.crashed
