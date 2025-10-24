@@ -1,11 +1,12 @@
 import argparse
 import os
+import yaml
 import gymnasium as gym
 
 from stable_baselines3 import PPO, A2C
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.logger import configure
-from stable_baselines3.common.vec_env import DummyVecEnv, VecTransposeImage
+from stable_baselines3.common.vec_env import DummyVecEnv
 
 from envs.lunar_lander.env import LunarLanderEnv
 # from envs.erpnext.env import ERPNextEnv (when ready)
@@ -29,47 +30,21 @@ def make_env(app="lunar_lander", persona="baseline", render_mode=None, seed=7):
 
     return env
 
-def get_hyperparams(algo, app):
+def load_hyperparams(algo, app):
     """
-    Select hyperparameters based on app and algorithm.
-    Makes sure the hyperparameters make sense for your app.
+    Loads hyperparameters based on app and algorithm.
+    Loads YAML files found in configs for reusability.
     """
-    if algo == "ppo":
-        if app == "lunar_lander":
-            # For envs with visuals (LunarLander-v2)
-            return dict(
-                learning_rate=3e-4,
-                n_steps=2048,
-                batch_size=64,
-                n_epochs=10,
-                gamma=0.99,
-                gae_lambda=0.95,
-                clip_range=0.2,
-                ent_coef=0.001,
-            )
-        else:
-            # For envs with no visuals (ERPNext)
-            return dict(
-                learning_rate=3e-4,
-                n_steps=1024,
-                batch_size=256,
-                n_epochs=10,
-                gamma=0.995,
-                gae_lambda=0.95,
-                clip_range=0.2,
-                ent_coef=0.001,
-            )
 
-    elif algo == "a2c":
-        # A2C hyperparameters (same for all envs)
-        return dict(
-            learning_rate=7e-4,
-            n_steps=5,
-            gamma=0.99,
-            ent_coef=0.0001,
-        )
-    else:
-        raise ValueError(f"Unsupported algorithm: {algo}")
+    path = f"configs/algo/{algo}.yaml"
+
+    with open(path, "r") as file:
+        config = yaml.safe_load(file)
+
+    if app in config: 
+        return config[app]
+
+    return config.get("default")
 
 def main(): 
     # Create command line arguments using argparse
@@ -104,7 +79,7 @@ def main():
         verbose=1,
         seed=args.seed,
         tensorboard_log=args.log_dir,
-        **get_hyperparams(args.algo, args.app),
+        **load_hyperparams(args.algo, args.app),
     )
 
     # Store short app name for path

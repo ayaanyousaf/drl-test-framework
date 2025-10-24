@@ -1,6 +1,16 @@
-# PPO hyperparameters for LunarLander-v2 and ERPNext
+# PPO default and app-specific hyperparameter configs
+default:
+  learning_rate: 0.0003
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.001
+
 lunar_lander:
-  learning_rate: 3e-4
+  learning_rate: 0.0003
   n_steps: 2048
   batch_size: 64
   n_epochs: 10
@@ -10,7 +20,7 @@ lunar_lander:
   ent_coef: 0.001
 
 erpnext:
-  learning_rate: 3e-4
+  learning_rate: 0.0003
   n_steps: 1024
   batch_size: 256
   n_epochs: 10
