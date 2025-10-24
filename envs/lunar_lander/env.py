@@ -78,17 +78,31 @@ class LunarLanderEnv(gym.Wrapper):
         vertical_stop = abs(y_vel) < 0.5
         stablized = abs(angle) < 0.1
 
+        info["landing_type"] = None
+
         # Check if the lander crashed or landed (after episode ends)
         if leg1 and leg2 and between_flags and horizontal_stop and vertical_stop and stablized: 
             self.landed = True
             self.crashed = False
             terminated = True
-        elif (leg1 or leg2) and (not stablized or not horizontal_stop or not vertical_stop or not between_flags):  
+            info["landing_type"] = "perfect"
+
+        elif leg1 and leg2 and horizontal_stop and vertical_stop and stablized and not between_flags: 
+            self.landed = True
+            self.crashed = False
+            terminated = True
+            info["landing_type"] = "missed"
+
+        elif (leg1 or leg2) and (not stablized or not horizontal_stop or not vertical_stop):  
             self.landed = False
             self.crashed = True
             terminated = True
+            info["landing_type"] = "crash"
+
         elif terminated: 
+            self.landed = False
             self.crashed = True
+            info["landing_type"] = "crash"
 
 
         info["landed"] = self.landed
@@ -98,7 +112,7 @@ class LunarLanderEnv(gym.Wrapper):
         if self.reward_manager:
             reward = self.reward_manager.compute(info)
 
-        # Add automatic metric collection
+        # Add additional metrics
         info["frame"] = self.frame_count
         info["persona"] = self.persona
         info["total_reward"] = float(reward)
