@@ -85,18 +85,22 @@ class RewardManager:
         """
         reward = 0.0
 
-        # Reward for descending faster
+        # Reward for descending faster, but not too fast
         if y_vel < -0.5:
             reward += 0.2
+        elif y_vel < -2.0: 
+            reward -= 0.2
+        elif y_vel > -0.2: 
+            reward -= 2.0 # large penalty for going up or descending slow
 
-        reward += max(0, -y_vel) * 0.4 # reward for staying fast vertically
 
-        # Reward for moving horizontally faster 
-        reward += abs(x_vel) * 0.05
+        reward += max(0, -y_vel) * 0.6 # reward for staying fast vertically
+        reward += abs(x_vel) * 0.02 # small reward for moving fast horizontally
+        reward += (1.0 - min(self.steps / 1000, 1.0)) * 0.5 # reward for landing in fewer steps
 
         # Small penalty for crashing
         if crashed and not self.crash_penalty_applied:
-            reward -= 0.5
+            reward -= 1.0
             self.crash_penalty_applied = True
 
         return reward
@@ -113,11 +117,13 @@ class RewardManager:
         # Penalize fast horizontal movement
         reward -= abs(x_vel) * 0.3
 
-        # Penalize fast vertical movement
-        if y_vel < -0.5:
-            reward -= 0.2
+        # Reward safe and steady descent
+        if -0.4 < y_vel < -0.1:
+            reward += 0.2
+        elif y_vel > -0.1: 
+            reward -= 0.1 # penalty for moving up or hovering too much
         else:
-            reward += 0.1  # reward slow and steady landing
+            reward -= abs(y_vel) * 0.1  # penalty for falling to fast
 
         # Penalize lander tilting (less stable)
         reward -= abs(angle) * 0.2
