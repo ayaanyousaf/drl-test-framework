@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 from stable_baselines3 import PPO, A2C
 from envs.lunar_lander.env import LunarLanderEnv
-from .metrics import export_metrics_csv
+from .export import export_metrics_csv
 
 
 def evaluate(model, env, episodes=5):
@@ -65,6 +65,7 @@ def main():
     p.add_argument("--episodes", type=int, default=10)
     p.add_argument("--timesteps", type=int, default=500_000)
     p.add_argument("--render", action="store_true")
+    p.add_argument("--export", action="store_true")
     args = p.parse_args()
 
     # Choose the algorithm
@@ -95,7 +96,12 @@ def main():
 
     # Export per-episode metrics to CSV
     export_dir = f"logs/{args.app}/{file_name}"
-    export_metrics_csv(episode_metrics, export_dir=export_dir)
+
+    if args.export: 
+        export_metrics_csv(episode_metrics, export_dir=export_dir)
+        print("Metrics exported to: {export_dir}/metrics.csv")
+    else: 
+        print("Metrics not exported. Use --export flag to export metrics to CSV.")
 
 
 if __name__ == "__main__":
