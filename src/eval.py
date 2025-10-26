@@ -99,7 +99,6 @@ def main():
 
     if args.export: 
         export_metrics_csv(episode_metrics, export_dir=export_dir)
-        print("Metrics exported to: {export_dir}/metrics.csv")
     else: 
         print("Metrics not exported. Use --export flag to export metrics to CSV.")
 
