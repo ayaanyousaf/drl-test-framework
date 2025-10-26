@@ -4,12 +4,12 @@ from .reward import RewardManager
 
 class LunarLanderEnv(gym.Wrapper):
     """
-    Wrapper for LunarLander-v2 environment.
+    Wrapper for LunarLander-v3 environment.
     Adds velocity, tilt, and landing/crashed info to RewardManager.
     """
 
     def __init__(self, persona="baseline", render_mode=None, seed=None):
-        env = gym.make("LunarLander-v2", render_mode=render_mode)
+        env = gym.make("LunarLander-v3", render_mode=render_mode)
         super().__init__(env)
 
         self.persona = persona
