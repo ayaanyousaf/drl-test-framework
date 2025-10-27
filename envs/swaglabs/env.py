@@ -35,7 +35,7 @@ class SwagLabsEnv(gym.Env):
         self.logged_in = False
 
         # We will define 8 discrete actions for the agent to choose from
-        self.action_space = spaces.Discrete(8)
+        self.action_space = spaces.Discrete(9)
         self.observation_space = spaces.Box(low=0, high=1, shape=(3,), dtype=np.float32)
 
         self.reward_manager = RewardManager(persona=self.persona)
@@ -53,11 +53,16 @@ class SwagLabsEnv(gym.Env):
             from webdriver_manager.chrome import ChromeDriverManager
 
             options = ChromeOptions()
+            options.add_experimental_option("prefs", {
+                "credentials_enable_service": False,
+                "profile.password_manager_enabled": False,
+                "profile.default_content_setting_values.notifications": 2
+            })
 
             # ------ Uncomment these lines to run in headless mode ------ 
-            #options.add_argument("--headless")
-            #options.add_argument("--no-sandbox")
-            #options.add_argument("--disable-dev-shm-usage")
+            options.add_argument("--headless")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
 
             print("Using Chrome WebDriver")
 
@@ -71,17 +76,10 @@ class SwagLabsEnv(gym.Env):
         super().reset(seed=seed)
         self.current_step = 0
 
-        # Restart the web driver for a new episode
-        if self.driver:
-            try:
-                self.driver.quit()
-            except:
-                pass
-
-        self.driver = self.set_driver()
-
         if not self.driver:
             self.driver = self.set_driver()
+        else: 
+            self.driver.get(self.url)
 
         if self.reward_manager:
             self.reward_manager.reset()
@@ -140,6 +138,7 @@ class SwagLabsEnv(gym.Env):
         5 - Fill in checkout information
         6 - Finish purchase
         7 - Logout of the website
+        8 - Back to inventory page
         """
 
         page_name = "unknown"
@@ -147,38 +146,30 @@ class SwagLabsEnv(gym.Env):
         error = 0.0
 
         try:
+            # Login first before trying any other actions
+            if not self.logged_in and action != 0:
+                self.login()
+                self.logged_in = True
+
             if action == 0:
                 self.login()
                 success = 1.0
 
             elif action == 1:   # Add item to cart
-                items = self.driver.find_elements(By.CLASS_NAME, "inventory_item")
+                WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.CLASS_NAME, "btn_inventory")))
+                items = self.driver.find_elements(By.CLASS_NAME, "btn_inventory")
 
                 if items:
-                    # Pick an unseen item in inventory
-                    available_indices = [i for i in range(len(items)) if i not in self.touched_selectors]
-
-                    if not available_indices:  # all items have been seen, allow repeats
-                        available_indices = list(range(len(items)))
-
-                    idx = random.choice(available_indices)
-
-                    self.touched_selectors.add(idx)
-
-                    btn = items[idx].find_element(By.CLASS_NAME, "btn_inventory")
-                    btn.click()
-
-                    page_name = f"add_item_{idx}"
+                    random.choice(items).click()
+                    page_name = "add_to_cart"
                     success = 1.0
-                else:
-                    error = 1.0
 
             elif action == 2:   # Remove item from cart
                 remove_buttons = self.driver.find_elements(By.CLASS_NAME, "btn_secondary")
 
                 if remove_buttons:
                     random.choice(remove_buttons).click()
-                    page_name = "remove_random"
+                    page_name = "remove_item"
                     success = 1.0
                 else:
                     error = 1.0
@@ -207,11 +198,19 @@ class SwagLabsEnv(gym.Env):
                 success = 1.0
 
             elif action == 7:   # Logout of the website
+                # Open the sidebar first
                 self.driver.find_element(By.ID, "react-burger-menu-btn").click()
-                time.sleep(0.5)
+                WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "logout_sidebar_link")))
+
+                # Click logout
                 self.driver.find_element(By.ID, "logout_sidebar_link").click()
                 self.logged_in = False
                 page_name = "logout"
+                success = 1.0
+            
+            elif action == 8:   # Back to inventory page
+                self.driver.find_element(By.ID, "back-to-products").click()
+                page_name = "inventory"
                 success = 1.0
 
             time.sleep(0.5)
@@ -278,7 +277,8 @@ class SwagLabsEnv(gym.Env):
             "touched_selectors": self.touched_selectors,
             "validation_errors": self.validation_errors,
             "successes": self.successes,
-            "step": self.current_step
+            "step": self.current_step,
+            "logged_in": self.logged_in,
         }
 
         # Calculate the reward using RewardManager
