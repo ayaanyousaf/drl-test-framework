@@ -58,6 +58,7 @@ class SwagLabsEnv(gym.Env):
             #options.add_argument("--headless")
             #options.add_argument("--no-sandbox")
             #options.add_argument("--disable-dev-shm-usage")
+            #options.add_argument("--disable-gpu")
 
             print("Using Chrome WebDriver")
 
@@ -182,6 +183,8 @@ class SwagLabsEnv(gym.Env):
                     page_name = "add_to_cart"
                     error = 1.0
 
+                print("Added item to cart.")
+
             elif action == 2:   # Remove item from cart
                 WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.CLASS_NAME, "btn_secondary")))
 
@@ -194,12 +197,15 @@ class SwagLabsEnv(gym.Env):
                 else:
                     error = 1.0
 
+                print("Removed item from cart.")
+
             elif action == 3:   # Go to cart page
                 WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.CLASS_NAME, "shopping_cart_link")))
 
                 self.driver.find_element(By.CLASS_NAME, "shopping_cart_link").click()
                 page_name = "cart"
                 success = 1.0
+                print("Navigated to cart page.")
 
             elif action == 4:   # Proceed to checkout
                 WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.ID, "checkout")))
@@ -207,16 +213,19 @@ class SwagLabsEnv(gym.Env):
                 self.driver.find_element(By.ID, "checkout").click()
                 page_name = "checkout"
                 success = 1.0
+                print("Proceeded to checkout.")
 
             elif action == 5:   # Fill in checkout information
-                WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.ID, "first-name")))
+                WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "first-name")))
                 
                 self.driver.find_element(By.ID, "first-name").send_keys("John")
                 self.driver.find_element(By.ID, "last-name").send_keys("Doe")
                 self.driver.find_element(By.ID, "postal-code").send_keys("A1B2C3")
                 self.driver.find_element(By.ID, "continue").click()
+
                 page_name = "checkout_info"
                 success = 1.0
+                print("Checkout information filled.")
 
             elif action == 6:   # Finish purchase
                 WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.ID, "finish")))
@@ -224,6 +233,7 @@ class SwagLabsEnv(gym.Env):
                 self.driver.find_element(By.ID, "finish").click()
                 page_name = "finish"
                 success = 1.0
+                print("Purchase finished! Flow complete.")
 
             elif action == 7:   # Logout of the website
                 WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.ID, "react-burger-menu-btn")))
@@ -236,6 +246,7 @@ class SwagLabsEnv(gym.Env):
                 self.logged_in = False
                 page_name = "logout"
                 success = 1.0
+                print("Logged out successfully.")
             
             elif action == 8:   # Back to inventory page
                 WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.ID, "back-to-products")))
@@ -243,6 +254,7 @@ class SwagLabsEnv(gym.Env):
                 self.driver.find_element(By.ID, "back-to-products").click()
                 page_name = "inventory"
                 success = 1.0
+                print("Returned to inventory page.")
 
             time.sleep(0.5)
 
