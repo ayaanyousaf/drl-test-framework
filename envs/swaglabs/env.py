@@ -53,16 +53,11 @@ class SwagLabsEnv(gym.Env):
             from webdriver_manager.chrome import ChromeDriverManager
 
             options = ChromeOptions()
-            options.add_experimental_option("prefs", {
-                "credentials_enable_service": False,
-                "profile.password_manager_enabled": False,
-                "profile.default_content_setting_values.notifications": 2
-            })
 
             # ------ Uncomment these lines to run in headless mode ------ 
-            options.add_argument("--headless")
-            options.add_argument("--no-sandbox")
-            options.add_argument("--disable-dev-shm-usage")
+            #options.add_argument("--headless")
+            #options.add_argument("--no-sandbox")
+            #options.add_argument("--disable-dev-shm-usage")
 
             print("Using Chrome WebDriver")
 
@@ -85,6 +80,7 @@ class SwagLabsEnv(gym.Env):
             self.reward_manager.reset()
 
         # Reset metrics
+        self.logged_in = False
         self.visited_pages.clear()
         self.touched_selectors.clear()
         self.latencies.clear()
@@ -100,9 +96,13 @@ class SwagLabsEnv(gym.Env):
         """
         Logs in to the Swag Labs website using admin credentials.
         """
+        
+        if self.logged_in:
+            print("Already logged in.")
+            return True
 
         self.driver.get(self.url)
-        time.sleep(1)  # small initial pause for redirects
+        time.sleep(1)
 
         try:
             # Fetch login elements (input fields and button)
@@ -116,14 +116,15 @@ class SwagLabsEnv(gym.Env):
             login_button.click()
 
             # Wait until user logs in and inventory page loads
-            WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.CLASS_NAME, "inventory_list")))
+            WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.CLASS_NAME, "inventory_list")))
 
             self.logged_in = True
             print("Login successful.")
+            return True
 
         except Exception as e:
-            # If element isn't found, assume already logged in or redirected
-            print(f"Login failed or already logged in: {e}.")
+            self.logged_in = "inventory" in self.driver.current_url
+            return self.logged_in
 
     def perform_action(self, action):
         """
@@ -146,25 +147,44 @@ class SwagLabsEnv(gym.Env):
         error = 0.0
 
         try:
+            # Handle repeated login attempts
+            if self.logged_in and action == 0:
+                print("Already logged in, skipping login action.")
+                return "inventory", 0.0, 1.0
+
             # Login first before trying any other actions
             if not self.logged_in and action != 0:
-                self.login()
-                self.logged_in = True
+                if not self.login():
+                    return "login_failed", 0.0, 1.0
 
             if action == 0:
-                self.login()
-                success = 1.0
+                if self.logged_in:
+                    print("Already logged in, skipping login.")
+                    page_name = "inventory"
+                    success = 0.0
+                    error = 1.0
+                else:
+                    can_login = self.login()
+                    page_name = "login" if can_login else "login_failed"
+                    success = 1.0 if can_login else 0.0
+                    error = 0.0 if can_login else 1.0
 
             elif action == 1:   # Add item to cart
-                WebDriverWait(self.driver, 5).until(EC.presence_of_element_located((By.CLASS_NAME, "btn_inventory")))
-                items = self.driver.find_elements(By.CLASS_NAME, "btn_inventory")
+                WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.CLASS_NAME, "btn_primary")))
+
+                items = self.driver.find_elements(By.CLASS_NAME, "btn_primary")
 
                 if items:
                     random.choice(items).click()
                     page_name = "add_to_cart"
                     success = 1.0
+                else: 
+                    page_name = "add_to_cart"
+                    error = 1.0
 
             elif action == 2:   # Remove item from cart
+                WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.CLASS_NAME, "btn_secondary")))
+
                 remove_buttons = self.driver.find_elements(By.CLASS_NAME, "btn_secondary")
 
                 if remove_buttons:
@@ -175,16 +195,22 @@ class SwagLabsEnv(gym.Env):
                     error = 1.0
 
             elif action == 3:   # Go to cart page
+                WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.CLASS_NAME, "shopping_cart_link")))
+
                 self.driver.find_element(By.CLASS_NAME, "shopping_cart_link").click()
                 page_name = "cart"
                 success = 1.0
 
             elif action == 4:   # Proceed to checkout
+                WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.ID, "checkout")))
+
                 self.driver.find_element(By.ID, "checkout").click()
                 page_name = "checkout"
                 success = 1.0
 
             elif action == 5:   # Fill in checkout information
+                WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.ID, "first-name")))
+                
                 self.driver.find_element(By.ID, "first-name").send_keys("John")
                 self.driver.find_element(By.ID, "last-name").send_keys("Doe")
                 self.driver.find_element(By.ID, "postal-code").send_keys("A1B2C3")
@@ -193,14 +219,17 @@ class SwagLabsEnv(gym.Env):
                 success = 1.0
 
             elif action == 6:   # Finish purchase
+                WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.ID, "finish")))
+
                 self.driver.find_element(By.ID, "finish").click()
                 page_name = "finish"
                 success = 1.0
 
             elif action == 7:   # Logout of the website
-                # Open the sidebar first
-                self.driver.find_element(By.ID, "react-burger-menu-btn").click()
-                WebDriverWait(self.driver, 3).until(EC.presence_of_element_located((By.ID, "logout_sidebar_link")))
+                WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.ID, "react-burger-menu-btn")))
+                self.driver.find_element(By.ID, "react-burger-menu-btn").click() # open the sidebar
+
+                WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.ID, "logout_sidebar_link")))
 
                 # Click logout
                 self.driver.find_element(By.ID, "logout_sidebar_link").click()
@@ -209,6 +238,8 @@ class SwagLabsEnv(gym.Env):
                 success = 1.0
             
             elif action == 8:   # Back to inventory page
+                WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.ID, "back-to-products")))
+
                 self.driver.find_element(By.ID, "back-to-products").click()
                 page_name = "inventory"
                 success = 1.0
@@ -217,7 +248,7 @@ class SwagLabsEnv(gym.Env):
 
         except Exception as e:
             error = 1.0
-            print(f"Action {action} failed: {e}")
+            print(f"Action {action} failed: {type(e).__name__}")
 
         return page_name, success, error
     
@@ -254,9 +285,13 @@ class SwagLabsEnv(gym.Env):
             self.validation_errors += 1
 
         # Termination conditions (when to end episode)
+        if time.time() - start_time > 10:
+            truncated = True
+        if page_name == "finish" or ("checkout-complete" in self.driver.current_url):
+            terminated = True
         if self.current_step >= self.max_steps:
             truncated = True
-        if self.validation_errors > 3:
+        if self.validation_errors > 10:
             terminated = True
 
         # Create the observation vector
@@ -279,6 +314,7 @@ class SwagLabsEnv(gym.Env):
             "successes": self.successes,
             "step": self.current_step,
             "logged_in": self.logged_in,
+            "action": int(action)
         }
 
         # Calculate the reward using RewardManager
