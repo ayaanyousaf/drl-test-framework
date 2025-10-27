@@ -19,9 +19,9 @@ lunar_lander:
   clip_range: 0.2
   ent_coef: 0.001
 
-erpnext:
+swaglabs:
   learning_rate: 0.0003
-  n_steps: 1024
+  n_steps: 256
   batch_size: 256
   n_epochs: 10
   gamma: 0.995
