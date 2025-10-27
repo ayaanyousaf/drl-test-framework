@@ -72,6 +72,16 @@ class SwagLabsEnv(gym.Env):
         super().reset(seed=seed)
         self.current_step = 0
 
+        # Clear the browser state for a new episode while keeping the same driver
+        if self.driver:
+            try:
+                self.driver.delete_all_cookies()
+                self.driver.execute_script("window.localStorage.clear();")
+                self.driver.execute_script("window.sessionStorage.clear();")
+                print("Browser state cleared for new episode.")
+            except Exception as e:
+                print(f"Warning: could not clear browser state: {e}")
+
         if not self.driver:
             self.driver = self.set_driver()
         else: 
