@@ -11,7 +11,7 @@ class RewardManager:
         self.prev_errors = 0
         self.logged_in_once = False 
         self.last_page = None
-        self.visited_pages = set()  # track visited pages
+        self.visited_pages = set() 
 
     def compute(self, info: dict) -> float:
         """
@@ -48,32 +48,30 @@ class RewardManager:
         elif page == "login" and self.logged_in_once:
             reward -= 2.0 + 0.1 * step # penalize repeated logins to avoid spam
 
-        # Reward for following a sequence of pages
-        if info.get("logged_in", False) and "cart" in page and "cart" not in self.visited_pages:
-            reward += 2.0
-            self.visited_pages.add("cart")
-
-        if "checkout" in page and "checkout" not in self.visited_pages:
-            reward += 3.0
-            self.visited_pages.add("checkout")
-
-        if "finish" in page and "finish" not in self.visited_pages:
-            reward += 5.0
-            self.visited_pages.add("finish")
-
-        # Encourage the agent to avoid repeating the same page
-        if page == getattr(self, "last_page", None):
+        # Encourage the agent to avoid staying on the same page
+        if page == self.last_page:
             reward -= 1.0 + 0.05 * max(0, step - 1)
-        self.last_page = page
+        else:
+            self.last_page = page
 
-        if "finish" in page: 
-            reward += 10.0
-        
         # ----- Persona-specific rewards ----- 
         if persona == "functional":
             reward += 2.0 * success
             reward -= 3 * error
             reward -= 0.05 * latency
+
+            # Reward for following a sequence of pages (functional wants to follow the purchase flow)
+            if logged_in and "cart" in page and "cart" not in self.visited_pages:
+                reward += 1.0
+                self.visited_pages.add("cart")
+
+            if "checkout" in page and "checkout" not in self.visited_pages:
+                reward += 4.0
+                self.visited_pages.add("checkout")
+
+            if "finish" in page and "finish" not in self.visited_pages:
+                reward += 12.0
+                self.visited_pages.add("finish")
 
         elif persona == "explorer":
             new_pages = len(visited_pages) - self.prev_page_count
@@ -84,6 +82,9 @@ class RewardManager:
 
             if new_pages == 0 and step > 5:
                 reward -= 1.0
+
+            if "finish" in visited_pages:
+                reward += 3.0
 
         # Small reward for exploring new pages
         reward += 0.05 * (len(visited_pages))
