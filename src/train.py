@@ -9,7 +9,7 @@ from stable_baselines3.common.logger import configure
 from stable_baselines3.common.vec_env import DummyVecEnv
 
 from envs.lunar_lander.env import LunarLanderEnv
-# from envs.erpnext.env import ERPNextEnv (when ready)
+from envs.swaglabs.env import SwagLabsEnv
 
 
 def make_env(app="lunar_lander", persona="baseline", render_mode=None, seed=7):
@@ -21,12 +21,14 @@ def make_env(app="lunar_lander", persona="baseline", render_mode=None, seed=7):
         app_name = "lunar"
         env = LunarLanderEnv(persona=persona, render_mode=render_mode)
 
-    # TODO: Make env for ERPNext once it's ready
-    elif app == "erpnext": 
-        app_name = "erp"
-        env = ...
+    elif app == "swaglabs": 
+        app_name = "swaglabs"
+        env = SwagLabsEnv(persona=persona)
+
+    else:
+        raise ValueError(f"App does not exist: {app}")
     
-    env = Monitor(env, filename=f"logs/{app_name}_{seed}.monitor.csv")
+    env = Monitor(env, filename=f"logs/{app}/{app_name}_{seed}.monitor.csv")
 
     return env
 
@@ -49,11 +51,11 @@ def load_hyperparams(algo, app):
 def main(): 
     # Create command line arguments using argparse
     p = argparse.ArgumentParser()
-    p.add_argument("--app", choices=["lunar_lander","erpnext"], default="lunar_lander")
+    p.add_argument("--app", choices=["lunar_lander","swaglabs"], default="lunar_lander")
     p.add_argument("--algo", choices=["ppo","a2c"], default="ppo")
     p.add_argument("--timesteps", type=int, default=100_000)
     p.add_argument("--seed", type=int, default=7)
-    p.add_argument("--persona", choices=["baseline", "speedrunner", "safe"], default="baseline")
+    p.add_argument("--persona", choices=["baseline", "speedrunner", "safe", "functional", "explorer"], default="baseline")
     p.add_argument("--log_dir", default="logs")
     p.add_argument("--model_dir", default="models")
 
@@ -83,7 +85,7 @@ def main():
     )
 
     # Store short app name for path
-    app_name = "lunar" if args.app == "lunar_lander" else "erp"
+    app_name = "lunar" if args.app == "lunar_lander" else "swaglabs"
 
     # Build clean tensorboard log directories
     log_app_dir = os.path.join(args.log_dir, args.app)
