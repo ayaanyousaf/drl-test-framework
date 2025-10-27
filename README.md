@@ -11,6 +11,8 @@ This project presents a fully reusable and scalable automated software testing f
 
 * **Swag Labs (Web App):** An e-commerce simulation used for QA testing. Agents automate login, product browsing, cart actions, and purchase/checkout 
 
+<br>
+
 ## ⚙️ Setup Instructions
 ### 1. Clone the repository
 ```bash
@@ -82,7 +84,9 @@ python -m src.eval --app lunar_lander --algo ppo --persona speedrunner --timeste
   options.add_argument("--disable-dev-shm-usage")
   ```
 
-## Personas and Rewards
+<br>
+
+## 🏆 Personas and Rewards
 
 | Persona | Description | Environment |
 |----------|--------------|--------------|
@@ -91,6 +95,7 @@ python -m src.eval --app lunar_lander --algo ppo --persona speedrunner --timeste
 | **Functional** | Prioritizes correct execution of functional workflows (login → cart → checkout). | Swag Labs |
 | **Explorer** | Encourages exploration: visiting new pages, clicking new elements.| Swag Labs |
 
+<br>
 
 ## 🚀 Features
 
@@ -106,8 +111,9 @@ python -m src.eval --app lunar_lander --algo ppo --persona speedrunner --timeste
 
 ✅ **Metrics Export & Visualization:** Export per-episode data to CSV and visualize in notebooks.  
 
+<br>
 
-## Tech Stack 
+## 🧑‍💻 Tech Stack 
 This project is built using a various Machine Learning, RL, and Web Automation tools:
 
 | Category | Technologies |
