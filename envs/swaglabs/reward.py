@@ -9,6 +9,7 @@ class RewardManager:
         self.prev_page_count = 0
         self.prev_successes = 0
         self.prev_errors = 0
+        self.prev_actions = set() # track previous action sin episode for explorer
         self.logged_in_once = False 
         self.last_page = None
         self.visited_pages = set() 
@@ -94,11 +95,18 @@ class RewardManager:
             reward += 0.5 * len(touched) / 20.0
             reward += 0.5 * min(error, 1)
 
+            reward -= 1.0 * error # small error penalty to avoid spam
+
             if new_pages == 0 and step > 5:
                 reward -= 1.0
 
             if "finish" in visited_pages:
                 reward += 3.0
+
+            self.prev_actions = getattr(self, "prev_actions", set())
+            if action not in self.prev_actions:
+                reward += 1.0
+                self.prev_actions.add(action)
 
         # Small reward for exploring new pages
         reward += 0.05 * (len(visited_pages))
