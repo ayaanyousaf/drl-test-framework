@@ -3,13 +3,22 @@
 --- 
 
 ## 📝 Overview 
-#### 🌐 Live Demo:  Coming soon...
-This project presents a fully reusable and scalable automated software testing framework powered by Deep Reinforcement Learning (DRL). The framework can integrate any web application or game through environment wrappers, allowing trained DRL agents to interact, explore, and evaluate the system. 
+#### 🌐 Video Demo: coming soon...
+This repository presents a fully reusable and scalable automated software testing framework powered by Deep Reinforcement Learning (DRL). The framework can integrate any web application or game through environment wrappers, allowing trained DRL agents to interact, explore, and evaluate the system. 
 
 ### Applications Tested
 * **LunarLander-v3 (Gymnasium environment):** A simple physics-based 2D game where the goal is to land a lunar lander on a target on the ground.
+<p align="center">
+  <img src="assets/lunar_lander_demo.gif" width="430" height="300" alt="Swag Labs Demo"/>
+</p>
 
-* **Swag Labs (Web App):** An e-commerce simulation used for QA testing. Agents automate login, product browsing, cart actions, and purchase/checkout 
+
+
+* **Swag Labs (Web App):** An e-commerce simulation used for QA testing. Agents automate login, browsing products, adding/removing items from cart, checkout, filling in information, and purchase item flows. Website: https://saucedemo.com
+<p align="center">
+  <img src="assets/swag_labs_demo.gif" width="640" height="300" alt="Swag Labs Demo"/>
+</p>
+
 
 <br>
 
@@ -79,9 +88,10 @@ python -m src.eval --app lunar_lander --algo ppo --persona speedrunner --timeste
 
 * To run web apps in Selenium (Swag Labs) headless, uncomment the chrome options found in `envs/swaglabs/env.py`: 
   ```python
-  options.add_argument("--headless")
+  options.add_argument("--headless=new")
   options.add_argument("--no-sandbox")
   options.add_argument("--disable-dev-shm-usage")
+  options.add_argument("--disable-gpu")
   ```
 
 <br>
@@ -114,10 +124,21 @@ python -m src.eval --app lunar_lander --algo ppo --persona speedrunner --timeste
 <br>
 
 ## 🧑‍💻 Tech Stack 
-This project is built using a various Machine Learning, RL, and Web Automation tools:
+This project is built using various Machine Learning, RL, and Web Automation tools:
 
 | Category | Technologies |
 |-----------|---------------|
 | **Core Technologies** | Python 3.11.5, Gymnasium, Stable-Baselines3 |
 | **Web Automation** | Selenium WebDriver, ChromeDriverManager |
 | **ML & Data Analysis** | NumPy, Pandas, Matplotlib, seaborn |
+
+<br>
+
+## 🚧 Future Improvements
+- Optimize training time in Swag Labs environment wrapper, could use SubprocVecEnv in train.py for training with Selenium.
+- Train a model with more timesteps for better evaluation.
+- Make the Swag Labs environment more modular (separate action logic, driver logic, etc.).
+- Add an “Expensive Shopper” or “Cheap Shopper” persona that checks price elements.
+- Add action for closing sidebar in Swag Labs.
+- Reward “add to cart” action for unique products for Explorer persona in Swag Labs.
+- Prevent agents from completing purchases without adding an item to cart in Swag Labs.
