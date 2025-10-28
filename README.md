@@ -3,7 +3,7 @@
 --- 
 
 ## 📝 Overview 
-#### 🌐 Video Demo: coming soon...
+#### ▶️ [Demo Video](https://youtu.be/1MSFtFpwVgA)
 This repository presents a fully reusable and scalable automated software testing framework powered by Deep Reinforcement Learning (DRL). The framework can integrate any web application or game through environment wrappers, allowing trained DRL agents to interact, explore, and evaluate the system. 
 
 ### Applications Tested
@@ -14,7 +14,9 @@ This repository presents a fully reusable and scalable automated software testin
 
 
 
-* **Swag Labs (Web App):** An e-commerce simulation used for QA testing. Agents automate login, browsing products, adding/removing items from cart, checkout, filling in information, and purchase item flows. Website: https://saucedemo.com
+* **Swag Labs (Web App):** An e-commerce simulation used for QA testing. Agents automate login, browsing products, adding/removing items from cart, checkout, filling in information, and purchase item flows. 
+
+  Website: https://saucedemo.com
 <p align="center">
   <img src="assets/swag_labs_demo.gif" width="640" height="300" alt="Swag Labs Demo"/>
 </p>
