@@ -56,22 +56,36 @@ class RewardManager:
 
         # ----- Persona-specific rewards ----- 
         if persona == "functional":
-            reward += 2.0 * success
-            reward -= 3 * error
+            reward += 1.5 * success
+            reward -= 2.0 * error
             reward -= 0.05 * latency
+
+            # Penalty for visiting cart too many times without proceeding to checkout
+            if "cart" in page and "checkout" not in self.visited_pages and step > 3:
+                reward -= 3.0
+            
+            # Penalty for proceeding to checkout without adding any items
+            if "checkout" in page and "add_to_cart" not in self.visited_pages:
+                reward -= 3.0
 
             # Reward for following a sequence of pages (functional wants to follow the purchase flow)
             if logged_in and "cart" in page and "cart" not in self.visited_pages:
-                reward += 1.0
+                reward += 2.0
                 self.visited_pages.add("cart")
 
             if "checkout" in page and "checkout" not in self.visited_pages:
-                reward += 4.0
+                reward += 12.0
                 self.visited_pages.add("checkout")
 
             if "finish" in page and "finish" not in self.visited_pages:
-                reward += 12.0
+                reward += 20.0
                 self.visited_pages.add("finish")
+
+            # Penalties for not following the flow
+            if "checkout" in page and "cart" not in self.visited_pages:
+                reward -= 2.0  # discourage skipping cart
+            if "finish" in page and "checkout" not in self.visited_pages:
+                reward -= 3.0  # discourage skipping proper sequence
 
         elif persona == "explorer":
             new_pages = len(visited_pages) - self.prev_page_count
